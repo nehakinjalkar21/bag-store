@@ -1,0 +1,684 @@
+mysql> create database bagshopdb;
+Query OK, 1 row affected (1.24 sec)
+
+mysql> use bagshopdb;
+Database changed
+mysql> create table category(cid int primary key auto_increment, cname varchar(20));
+Query OK, 0 rows affected (0.67 sec)
+
+mysql> create table bag(bagid int primary key auto_increment, bag_name varchar(20), price float,
+    -> description varchar(100), img_url varchar(50), quantity int, cat_id int);
+Query OK, 0 rows affected (0.42 sec)
+
+mysql> alter table bag add foreign key (cat_id) references category(cid);
+Query OK, 0 rows affected (1.09 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+
+userinfo table
+
+mysql> create table UserInfo(username varchar(20) primary key, password varchar(20),
+    -> email_id varchar(100),role varchar(30));
+Query OK, 0 rows affected (0.34 sec)
+
+mysql> insert into UserInfo values("Admin1","admin@123","neha@gmail.com","admin");
+Query OK, 1 row affected (0.18 sec)
+
+mysql> insert into UserInfo values("Admin2","admin@123","firstbit@gmail.com","admin");
+Query OK, 1 row affected (0.03 sec)
+
+
+
+
+
+
+
+mycart queries
+
+
+mysql> create view mycart_vw as (select b.bag_name, b.img_url,b.price, m.qty, b.price*m.qty, m.username
+    -> from bag b inner join mycart m on b.bagid=m.bagid;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 2
+mysql> create view mycart_vw as (select b.bag_name, b.img_url,b.price, m.qty, b.price*m.qty, m.username
+    -> from bag b inner join mycart m on b.bagid=m.bagid);
+Query OK, 0 rows affected (0.30 sec)
+
+mysql> drop table mycart;
+Query OK, 0 rows affected (5.27 sec)
+
+mysql> create table MyCart(id int primary key auto_increment, username varchar(20), bag_id int);
+Query OK, 0 rows affected (3.19 sec)
+
+mysql> alter table MyCart add foreign key(username) references UserInfo(username), add foreign key(bag_id)
+    -> references bag(bagid), add qty int;
+Query OK, 0 rows affected (1.80 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> create view mycart_vw as (select b.bag_name, b.img_url,b.price, m.qty, b.price*m.qty, m.username
+    -> from bag b inner join mycart m on b.bagid=m.bag_id;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 2
+mysql> create view mycart_vw as (select b.bag_name, b.img_url,b.price, m.qty, b.price*m.qty, m.username
+    -> from bag b inner join mycart m on b.bagid=m.bag_id);
+ERROR 1050 (42S01): Table 'mycart_vw' already exists
+mysql> drop table mycart_vw;
+ERROR 1051 (42S02): Unknown table 'bagshopdb.mycart_vw'
+mysql> drop view mycart_vw;
+Query OK, 0 rows affected (0.44 sec)
+
+mysql> create view mycart_vw as (select b.bag_name, b.img_url,b.price, m.qty, b.price*m.qty, m.username
+    -> from bag b inner join mycart m on b.bagid=m.bag_id);
+Query OK, 0 rows affected (0.57 sec)
+
+mysql> (select b.bag_name, b.img_url,b.price, m.qty, b.price*m.qty, m.username
+    ->     -> from bag b inner join mycart m on b.bagid=m.bag_id
+    -> (select b.bag_name, b.img_url,b.price, m.qty, b.price*m.qty, m.username;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'from bag b inner join mycart m on b.bagid=m.bag_id
+(select b.bag_name, b.img_url' at line 2
+mysql> select b.bag_name, b.img_url,b.price, m.qty, b.price*m.qty, m.username
+    -> from bag b inner join mycart m on b.bagid=m.bag_id;
++--------------------+------------------------+-------+------+---------------+----------+
+| bag_name           | img_url                | price | qty  | b.price*m.qty | username |
++--------------------+------------------------+-------+------+---------------+----------+
+| holographic wallet | Images/holographic.jpg |   400 |    2 |           800 | teertha  |
+| casual backpack    | Images/casual.jpg      |   450 |    3 |          1350 | teertha  |
++--------------------+------------------------+-------+------+---------------+----------+
+2 rows in set (0.21 sec)
+
+mysql> select * from mycart_vw;
++--------------------+------------------------+-------+------+---------------+----------+
+| bag_name           | img_url                | price | qty  | b.price*m.qty | username |
++--------------------+------------------------+-------+------+---------------+----------+
+| holographic wallet | Images/holographic.jpg |   400 |    2 |           800 | teertha  |
+| casual backpack    | Images/casual.jpg      |   450 |    3 |          1350 | teertha  |
++--------------------+------------------------+-------+------+---------------+----------+
+2 rows in set (0.12 sec)
+
+mysql> drop view mycart_vw;
+Query OK, 0 rows affected (0.44 sec)
+
+mysql> create view mycart_vw as (select b.bag_name, b.img_url,b.price, m.qty, b.price*m.qty "subtotal", m.username
+    -> from bag b inner join mycart m on b.bagid=m.bag_id);
+Query OK, 0 rows affected (0.32 sec)
+
+mysql> select * from mycart_vw;
++--------------------+------------------------+-------+------+----------+----------+
+| bag_name           | img_url                | price | qty  | subtotal | username |
++--------------------+------------------------+-------+------+----------+----------+
+| holographic wallet | Images/holographic.jpg |   400 |    2 |      800 | teertha  |
+| casual backpack    | Images/casual.jpg      |   450 |    3 |     1350 | teertha  |
++--------------------+------------------------+-------+------+----------+----------+
+2 rows in set (0.02 sec)
+
+mysql> select sum(subtotal) from mycart_vw;
++---------------+
+| sum(subtotal) |
++---------------+
+|          2150 |
++---------------+
+1 row in set (0.08 sec)
+
+
+
+mysql> alter view mycart_vw as (
+    -> select b.bagid,b.bag_name,b.img_url,b.price,m.qty,b.price*m.qty "subtotal",m.username from bag b
+    -> inner join mycart m on b.bagid = m.bag_id);
+Query OK, 0 rows affected (1.00 sec)
+
+mysql> select * from mycart_vw;
++-------+--------------------+------------------------+-------+------+----------+----------+
+| bagid | bag_name           | img_url                | price | qty  | subtotal | username |
++-------+--------------------+------------------------+-------+------+----------+----------+
+|     4 | holographic wallet | Images/holographic.jpg |   400 |    2 |      800 | teertha  |
+|     2 | casual backpack    | Images/casual.jpg      |   450 |    3 |     1350 | teertha  |
+|     1 | party sling bag    | Images/party sling.jpg |   550 |    2 |     1100 | teertha  |
+|     1 | party sling bag    | Images/party sling.jpg |   550 |    1 |      550 | teertha  |
++-------+--------------------+------------------------+-------+------+----------+----------+
+4 rows in set (0.01 sec)
+
+
+
+
+
+mypayment 
+
+
+
+mysql> create table mypayment(id int primary key auto_increment, uname varchar(20),
+    -> cardno varchar(16),cvv varchar(4), expiry varchar(10), balance float);
+Query OK, 0 rows affected (4.89 sec)
+
+mysql> insert into mypayment(uname,cardno,cvv,expiry,balance) values ("neha", "121", "111", "12/2026",5000);
+Query OK, 1 row affected (0.71 sec)
+
+mysql> insert into mypayment(uname,cardno,cvv,expiry,balance) values ("teertha", "128", "131", "12/2027",6000);
+Query OK, 1 row affected (0.09 sec)
+
+mysql> insert into mypayment(uname,cardno,cvv,expiry,balance) values ("owner", "444", "444", "12/2026",6000);
+Query OK, 1 row affected (0.08 sec)
+
+mysql> select * from mypayment;
++----+---------+--------+------+---------+---------+
+| id | uname   | cardno | cvv  | expiry  | balance |
++----+---------+--------+------+---------+---------+
+|  1 | neha    | 121    | 111  | 12/2026 |    5000 |
+|  2 | teertha | 128    | 131  | 12/2027 |    6000 |
+|  3 | owner   | 444    | 444  | 12/2026 |    6000 |
++----+---------+--------+------+---------+---------+
+3 rows in set (0.12 sec)
+
+
+
+order master
+
+mysql> create table orderMaster(id int primary key auto_increment, username varchar(20),
+    -> description varchar(100), date_of_order date,amount float);
+Query OK, 0 rows affected (4.92 sec)
+
+mysql> select * from orderMaster;
++----+----------+-------------+---------------+--------+
+| id | username | description | date_of_order | amount |
++----+----------+-------------+---------------+--------+
+|  1 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |
+|  2 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |
+|  3 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |
++----+----------+-------------+---------------+--------+
+3 rows in set (0.08 sec)
+
+mysql> select * from mypayment;
++----+---------+--------+------+---------+---------+
+| id | uname   | cardno | cvv  | expiry  | balance |
++----+---------+--------+------+---------+---------+
+|  1 | neha    | 121    | 111  | 12/2026 |    5000 |
+|  2 | teertha | 128    | 131  | 12/2027 |   -3300 |
+|  3 | owner   | 444    | 444  | 12/2026 |   15300 |
++----+---------+--------+------+---------+---------+
+3 rows in set (0.14 sec)
+
+mysql> update mypayment set balance 10000 where id=2;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '10000 where id=2' at line 1
+mysql> update mypayment set balance=10000 where id=2;
+Query OK, 1 row affected (0.03 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from mypayment;
++----+---------+--------+------+---------+---------+
+| id | uname   | cardno | cvv  | expiry  | balance |
++----+---------+--------+------+---------+---------+
+|  1 | neha    | 121    | 111  | 12/2026 |    5000 |
+|  2 | teertha | 128    | 131  | 12/2027 |   10000 |
+|  3 | owner   | 444    | 444  | 12/2026 |   15300 |
++----+---------+--------+------+---------+---------+
+3 rows in set (0.00 sec)
+
+mysql> select * from mypayment;
++----+---------+--------+------+---------+---------+
+| id | uname   | cardno | cvv  | expiry  | balance |
++----+---------+--------+------+---------+---------+
+|  1 | neha    | 121    | 111  | 12/2026 |    5000 |
+|  2 | teertha | 128    | 131  | 12/2027 |    7901 |
+|  3 | owner   | 444    | 444  | 12/2026 |   17399 |
++----+---------+--------+------+---------+---------+
+3 rows in set (0.00 sec)
+
+mysql> select * from orderMaster;
++----+----------+-------------+---------------+--------+
+| id | username | description | date_of_order | amount |
++----+----------+-------------+---------------+--------+
+|  1 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |
+|  2 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |
+|  3 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |
+|  4 | teertha  | 1,2|6,1     | 2023-12-17    |   2099 |
++----+----------+-------------+---------------+--------+
+4 rows in set (0.00 sec)
+
+
+Wishlist
+
+
+mysql> create table wishlist(id int primary key auto_increment, username varchar(20), bag_id int);
+Query OK, 0 rows affected (0.60 sec)
+
+mysql> alter table wishlist add foreign key(username) references UserInfo(username), add foreign key(bag_id) references bag(bagid), add qty int;
+Query OK, 0 rows affected (2.38 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+create view wishlist_vw as (select b.bag_name, b.img_url,b.price, w.qty, b.price*w.qty "subtotal", w.username
+    -> from bag b inner join wishlist w on b.bagid=w.bag_id);
+Query OK, 0 rows affected (0.09 sec)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Enter password: ****
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 836
+Server version: 8.0.34 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> use bagshopdb;
+Database changed
+mysql> show tables;
++---------------------+
+| Tables_in_bagshopdb |
++---------------------+
+| bag                 |
+| category            |
+| mycart              |
+| mycart_vw           |
+| mypayment           |
+| ordermaster         |
+| userinfo            |
+| wishlist            |
+| wishlist_vw         |
++---------------------+
+9 rows in set (2.23 sec)
+
+mysql> desc wishlist;
++----------+-------------+------+-----+---------+----------------+
+| Field    | Type        | Null | Key | Default | Extra          |
++----------+-------------+------+-----+---------+----------------+
+| id       | int         | NO   | PRI | NULL    | auto_increment |
+| username | varchar(20) | YES  | MUL | NULL    |                |
+| bag_id   | int         | YES  | MUL | NULL    |                |
+| qty      | int         | YES  |     | NULL    |                |
++----------+-------------+------+-----+---------+----------------+
+4 rows in set (0.09 sec)
+
+mysql> drop table wishlist;
+ERROR 2013 (HY000): Lost connection to MySQL server during query
+No connection. Trying to reconnect...
+Connection id:    838
+Current database: bagshopdb
+
+Query OK, 0 rows affected (4 min 18.12 sec)
+
+mysql> create view wishlist_vw as (select b.bag_name, b.img_url,b.price, w.qty, b.price*w.qty "subtotal", w.username
+    ->     -> from bag b inner join wishlist w on b.bagid=w.bag_id);
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'from bag b inner join wishlist w on b.bagid=w.bag_id)' at line 2
+mysql>
+mysql>
+mysql>
+mysql>
+mysql> create table wishlist(id int primary key auto_increment, username varchar(20), bag_id int);
+Query OK, 0 rows affected (0.81 sec)
+
+mysql> alter table wishlist add foreign key(username) references UserInfo(username), add foreign key(bag_id) references bag(bagid), add qty int;
+Query OK, 0 rows affected (1.52 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> drop view wishlist_vw;
+Query OK, 0 rows affected (0.16 sec)
+
+mysql> create view wishlist_vw as (select b.bag_name, b.img_url,b.price, w.qty, b.price*w.qty "subtotal", w.username
+    -> from bag b inner join wishlist w on b.bagid=w.bag_id);
+Query OK, 0 rows affected (0.08 sec)
+
+mysql> select * from wishlist;
++----+----------+--------+------+
+| id | username | bag_id | qty  |
++----+----------+--------+------+
+|  1 | teertha  |      2 |    1 |
++----+----------+--------+------+
+1 row in set (0.00 sec)
+
+mysql> select * from wishlist_vw;
++-----------------+-------------------+-------+------+----------+----------+
+| bag_name        | img_url           | price | qty  | subtotal | username |
++-----------------+-------------------+-------+------+----------+----------+
+| casual backpack | Images/casual.jpg |   450 |    1 |      450 | teertha  |
++-----------------+-------------------+-------+------+----------+----------+
+1 row in set (0.00 sec)
+
+mysql> delete from wishlist_vw where bag_name="casual backpack";
+ERROR 1395 (HY000): Can not delete from join view 'bagshopdb.wishlist_vw'
+mysql> truncate wishlist_vw;
+ERROR 1146 (42S02): Table 'bagshopdb.wishlist_vw' doesn't exist
+mysql> select * from wishlist_vw;
++-----------------+-------------------+-------+------+----------+----------+
+| bag_name        | img_url           | price | qty  | subtotal | username |
++-----------------+-------------------+-------+------+----------+----------+
+| casual backpack | Images/casual.jpg |   450 |    1 |      450 | teertha  |
++-----------------+-------------------+-------+------+----------+----------+
+1 row in set (0.00 sec)
+
+mysql> drop view wishlist_vw;
+Query OK, 0 rows affected (0.14 sec)
+
+mysql> select * from wishlist_vw;
+ERROR 1146 (42S02): Table 'bagshopdb.wishlist_vw' doesn't exist
+mysql> create view wishlist_view as (select b.bag_name, b.img_url,b.price, w.qty, b.price*w.qty "subtotal", w.username
+    -> from bag b inner join wishlist w on b.bagid=w.bag_id);
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> select * from wishlist;
++----+----------+--------+------+
+| id | username | bag_id | qty  |
++----+----------+--------+------+
+|  1 | teertha  |      2 |    1 |
++----+----------+--------+------+
+1 row in set (0.00 sec)
+
+mysql> delete from wishlist where id=1;
+Query OK, 1 row affected (0.72 sec)
+
+mysql> select * from wishlist;
+Empty set (0.00 sec)
+
+mysql> select * from wishlist_view;
+Empty set (0.00 sec)
+
+mysql> alter view wishlist_view as (
+    -> select b.bagid,b.bag_name,b.img_url,b.price,w.qty,b.price*w.qty "subtotal",m.username from bag b
+    -> inner join wishlist w on b.bagid = w.bag_id);
+ERROR 1054 (42S22): Unknown column 'm.username' in 'field list'
+mysql> alter view wishlist_view as (
+    -> select b.bagid,b.bag_name,b.img_url,b.price,w.qty,b.price*w.qty "subtotal",w.username from bag b
+    -> inner join wishlist w on b.bagid = w.bag_id);
+Query OK, 0 rows affected (0.16 sec)
+
+mysql> select * from ordermaster;
++----+----------+-------------+---------------+--------+
+| id | username | description | date_of_order | amount |
++----+----------+-------------+---------------+--------+
+|  1 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |
+|  2 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |
+|  3 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |
+|  4 | teertha  | 1,2|6,1     | 2023-12-17    |   2099 |
++----+----------+-------------+---------------+--------+
+4 rows in set (3.49 sec)
+
+mysql> desc ordermaster;
++---------------+--------------+------+-----+---------+----------------+
+| Field         | Type         | Null | Key | Default | Extra          |
++---------------+--------------+------+-----+---------+----------------+
+| id            | int          | NO   | PRI | NULL    | auto_increment |
+| username      | varchar(20)  | YES  |     | NULL    |                |
+| description   | varchar(100) | YES  |     | NULL    |                |
+| date_of_order | date         | YES  |     | NULL    |                |
+| amount        | float        | YES  |     | NULL    |                |
++---------------+--------------+------+-----+---------+----------------+
+5 rows in set (2.07 sec)
+
+mysql> SELECT o.id, o.description, o.date_of_order, o.amount, b.bag_name
+    ->         FROM ordermaster inner
+    ->         JOIN bag ON o.bag_id = b.bagid
+    -> ;
+ERROR 1054 (42S22): Unknown column 'o.id' in 'field list'
+mysql> SELECT o.bag_id, o.description, o.date_of_order, o.amount, b.bag_name
+    ->         FROM ordermaster inner
+    ->         JOIN bag ON o.bag_id = b.bagid;
+ERROR 1054 (42S22): Unknown column 'o.bag_id' in 'field list'
+mysql> alter table ordermaster add foreign key(bag_id) references bag(bagid);
+ERROR 1072 (42000): Key column 'bag_id' doesn't exist in table
+mysql> alter table ordermaster add column bag_id;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+mysql> alter table ordermaster add bag_id;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+mysql> alter table ordermaster add foreign key(bag_id) references bag(bagid), add bag_id int;
+Query OK, 4 rows affected (2.71 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+mysql> SELECT o.bag_id, o.description, o.date_of_order, o.amount, b.bag_name
+    ->         FROM ordermaster inner
+    ->         JOIN bag ON o.bag_id = b.bagid;
+ERROR 1054 (42S22): Unknown column 'o.bag_id' in 'field list'
+mysql>  SELECT o.bag_id, o.description, o.date_of_order, o.amount, b.bag_name
+    ->         FROM ordermaster inner
+    ->         JOIN bag ON o.bag_id = b.bagid;
+ERROR 1054 (42S22): Unknown column 'o.bag_id' in 'field list'
+mysql> desc ordermaster;
++---------------+--------------+------+-----+---------+----------------+
+| Field         | Type         | Null | Key | Default | Extra          |
++---------------+--------------+------+-----+---------+----------------+
+| id            | int          | NO   | PRI | NULL    | auto_increment |
+| username      | varchar(20)  | YES  |     | NULL    |                |
+| description   | varchar(100) | YES  |     | NULL    |                |
+| date_of_order | date         | YES  |     | NULL    |                |
+| amount        | float        | YES  |     | NULL    |                |
+| bag_id        | int          | YES  | MUL | NULL    |                |
++---------------+--------------+------+-----+---------+----------------+
+6 rows in set (0.00 sec)
+
+mysql> select b.bagid,b.bag_name,b.img_url,b.price,w.qty,b.price*w.qty "subtotal",w.username from bag b
+    -> ;
+ERROR 1054 (42S22): Unknown column 'w.qty' in 'field list'
+mysql>
+mysql>
+mysql>
+mysql>
+mysql> select * from ordermaster;
++----+----------+-------------+---------------+--------+--------+
+| id | username | description | date_of_order | amount | bag_id |
++----+----------+-------------+---------------+--------+--------+
+|  1 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |   NULL |
+|  2 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |   NULL |
+|  3 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |   NULL |
+|  4 | teertha  | 1,2|6,1     | 2023-12-17    |   2099 |   NULL |
++----+----------+-------------+---------------+--------+--------+
+4 rows in set (0.00 sec)
+
+mysql> show create table ordermaster;
++-------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Table       | Create Table                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
++-------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ordermaster | CREATE TABLE `ordermaster` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `username` varchar(20) DEFAULT NULL,
+  `description` varchar(100) DEFAULT NULL,
+  `date_of_order` date DEFAULT NULL,
+  `amount` float DEFAULT NULL,
+  `bag_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `bag_id` (`bag_id`),
+  CONSTRAINT `ordermaster_ibfk_1` FOREIGN KEY (`bag_id`) REFERENCES `bag` (`bagid`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci |
++-------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (0.16 sec)
+
+mysql> alter table ordermaster drop constraint ordermaster_ibfk_1;
+Query OK, 0 rows affected (0.31 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> select * from ordermaster;
++----+----------+-------------+---------------+--------+--------+
+| id | username | description | date_of_order | amount | bag_id |
++----+----------+-------------+---------------+--------+--------+
+|  1 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |   NULL |
+|  2 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |   NULL |
+|  3 | teertha  | 2,2|5,1     | 2023-12-17    |   1550 |   NULL |
+|  4 | teertha  | 1,2|6,1     | 2023-12-17    |   2099 |   NULL |
++----+----------+-------------+---------------+--------+--------+
+4 rows in set (0.00 sec)
+
+mysql> desc ordermaster;
++---------------+--------------+------+-----+---------+----------------+
+| Field         | Type         | Null | Key | Default | Extra          |
++---------------+--------------+------+-----+---------+----------------+
+| id            | int          | NO   | PRI | NULL    | auto_increment |
+| username      | varchar(20)  | YES  |     | NULL    |                |
+| description   | varchar(100) | YES  |     | NULL    |                |
+| date_of_order | date         | YES  |     | NULL    |                |
+| amount        | float        | YES  |     | NULL    |                |
+| bag_id        | int          | YES  | MUL | NULL    |                |
++---------------+--------------+------+-----+---------+----------------+
+6 rows in set (0.00 sec)
+
+mysql> alter table ordermaster drop column bag_id;
+Query OK, 0 rows affected (1.69 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> desc ordermaster;
++---------------+--------------+------+-----+---------+----------------+
+| Field         | Type         | Null | Key | Default | Extra          |
++---------------+--------------+------+-----+---------+----------------+
+| id            | int          | NO   | PRI | NULL    | auto_increment |
+| username      | varchar(20)  | YES  |     | NULL    |                |
+| description   | varchar(100) | YES  |     | NULL    |                |
+| date_of_order | date         | YES  |     | NULL    |                |
+| amount        | float        | YES  |     | NULL    |                |
++---------------+--------------+------+-----+---------+----------------+
+5 rows in set (0.10 sec)
+
+mysql> select * from mypayment;
++----+---------+--------+------+---------+---------+
+| id | uname   | cardno | cvv  | expiry  | balance |
++----+---------+--------+------+---------+---------+
+|  1 | neha    | 121    | 111  | 12/2026 |    5000 |
+|  2 | teertha | 128    | 131  | 12/2027 |    7901 |
+|  3 | owner   | 444    | 444  | 12/2026 |   17399 |
++----+---------+--------+------+---------+---------+
+3 rows in set (0.50 sec)
+
+mysql> select * from bag;
++-------+--------------------+-------+-------------------------------+----------------------------+----------+--------+
+| bagid | bag_name           | price | description                   | img_url                    | quantity | cat_id |
++-------+--------------------+-------+-------------------------------+----------------------------+----------+--------+
+|     1 | party sling bag    |   550 | women's girls party sling bag | Images/party sling.jpg     |       -1 |      1 |
+|     2 | casual backpack    |   450 | casual                        | Images/casual.jpg          |        1 |      3 |
+|     3 | canvas backpack    |   585 | canvas                        | Images/canvas.jpg          |        8 |      3 |
+|     4 | holographic wallet |   400 | hollo graphic triangles       | Images/holographic.jpg     |        7 |      6 |
+|     5 | rounded sling bag  |   650 | white rounded sling bag       | Images/rounded sling.jpg   |        3 |      1 |
+|     6 | pixel pallate      |   999 | pixel palate laptop bag       | Images/pixelpallate.jpg    |        6 |      4 |
+|     8 | Leather Handbag    |  1200 | Leather handbag               | Images/leather handbag.jpg |        6 |      2 |
++-------+--------------------+-------+-------------------------------+----------------------------+----------+--------+
+7 rows in set (0.32 sec)
+
+mysql> select * from category;
++-----+-------------+
+| cid | cname       |
++-----+-------------+
+|   1 | Sling       |
+|   2 | HandBags    |
+|   3 | Backpacks   |
+|   4 | Laptop bags |
+|   6 | Wallets     |
++-----+-------------+
+5 rows in set (0.12 sec)
+
+mysql> select * from mypayment;
++----+---------+--------+------+---------+---------+
+| id | uname   | cardno | cvv  | expiry  | balance |
++----+---------+--------+------+---------+---------+
+|  1 | neha    | 121    | 111  | 12/2026 |    5000 |
+|  2 | teertha | 128    | 131  | 12/2027 |  -18197 |
+|  3 | owner   | 444    | 444  | 12/2026 |   43497 |
++----+---------+--------+------+---------+---------+
+3 rows in set (0.23 sec)
+
+mysql> update mypayment set balace=20000 where id=2;
+ERROR 1054 (42S22): Unknown column 'balace' in 'field list'
+mysql> update mypayment set balace=20000 where uname=teertha;
+ERROR 1054 (42S22): Unknown column 'teertha' in 'where clause'
+mysql> update mypayment set balance=20000 where uname=teertha;
+ERROR 1054 (42S22): Unknown column 'teertha' in 'where clause'
+mysql> update mypayment set balance=20000 where uname="teertha";
+Query OK, 1 row affected (0.49 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from mypayment;
++----+---------+--------+------+---------+---------+
+| id | uname   | cardno | cvv  | expiry  | balance |
++----+---------+--------+------+---------+---------+
+|  1 | neha    | 121    | 111  | 12/2026 |    5000 |
+|  2 | teertha | 128    | 131  | 12/2027 |   20000 |
+|  3 | owner   | 444    | 444  | 12/2026 |   43497 |
++----+---------+--------+------+---------+---------+
+3 rows in set (0.00 sec)
+
+mysql> select * from ordermaster;
++----+----------+-----------------+---------------+--------+
+| id | username | description     | date_of_order | amount |
++----+----------+-----------------+---------------+--------+
+|  1 | teertha  | 2,2|5,1         | 2023-12-17    |   1550 |
+|  2 | teertha  | 2,2|5,1         | 2023-12-17    |   1550 |
+|  3 | teertha  | 2,2|5,1         | 2023-12-17    |   1550 |
+|  4 | teertha  | 1,2|6,1         | 2023-12-17    |   2099 |
+|  5 | teertha  | 4,1|6,1|5,1|1,2 | 2023-12-28    |   3149 |
+|  6 | teertha  |                 | 2023-12-28    |   3149 |
+|  7 | teertha  | 1,2             | 2023-12-29    |   1100 |
+|  8 | teertha  |                 | 2023-12-29    |   1100 |
+|  9 | teertha  |                 | 2023-12-29    |   1100 |
+| 10 | teertha  |                 | 2023-12-29    |   1100 |
+| 11 | teertha  |                 | 2023-12-29    |   1100 |
+| 12 | teertha  |                 | 2023-12-29    |   1100 |
+| 13 | teertha  |                 | 2023-12-29    |   1100 |
+| 14 | teertha  |                 | 2023-12-29    |   1100 |
+| 15 | teertha  |                 | 2023-12-29    |   1100 |
+| 16 | teertha  |                 | 2023-12-29    |   1100 |
+| 17 | teertha  |                 | 2023-12-29    |   1100 |
+| 18 | teertha  |                 | 2023-12-29    |   1100 |
+| 19 | teertha  |                 | 2023-12-29    |   1100 |
+| 20 | teertha  |                 | 2023-12-29    |   1100 |
+| 21 | teertha  |                 | 2023-12-29    |   1100 |
+| 22 | teertha  |                 | 2023-12-29    |   1100 |
+| 23 | teertha  |                 | 2023-12-29    |   1100 |
+| 24 | teertha  |                 | 2023-12-29    |   1100 |
+| 25 | teertha  | 2,1|1,1|3,1|4,1 | 2023-12-31    |   1985 |
+| 26 | teertha  |                 | 2023-12-31    |   1985 |
+| 27 | teertha  |                 | 2023-12-31    |   1985 |
+| 28 | teertha  |                 | 2023-12-31    |   1985 |
+| 29 | teertha  |                 | 2023-12-31    |   1985 |
++----+----------+-----------------+---------------+--------+
+29 rows in set (1.15 sec)
+
+mysql> select * from ordermaster;
++----+----------+-----------------+---------------+--------+
+| id | username | description     | date_of_order | amount |
++----+----------+-----------------+---------------+--------+
+|  1 | teertha  | 2,2|5,1         | 2023-12-17    |   1550 |
+|  2 | teertha  | 2,2|5,1         | 2023-12-17    |   1550 |
+|  3 | teertha  | 2,2|5,1         | 2023-12-17    |   1550 |
+|  4 | teertha  | 1,2|6,1         | 2023-12-17    |   2099 |
+|  5 | teertha  | 4,1|6,1|5,1|1,2 | 2023-12-28    |   3149 |
+|  6 | teertha  |                 | 2023-12-28    |   3149 |
+|  7 | teertha  | 1,2             | 2023-12-29    |   1100 |
+|  8 | teertha  |                 | 2023-12-29    |   1100 |
+|  9 | teertha  |                 | 2023-12-29    |   1100 |
+| 10 | teertha  |                 | 2023-12-29    |   1100 |
+| 11 | teertha  |                 | 2023-12-29    |   1100 |
+| 12 | teertha  |                 | 2023-12-29    |   1100 |
+| 13 | teertha  |                 | 2023-12-29    |   1100 |
+| 14 | teertha  |                 | 2023-12-29    |   1100 |
+| 15 | teertha  |                 | 2023-12-29    |   1100 |
+| 16 | teertha  |                 | 2023-12-29    |   1100 |
+| 17 | teertha  |                 | 2023-12-29    |   1100 |
+| 18 | teertha  |                 | 2023-12-29    |   1100 |
+| 19 | teertha  |                 | 2023-12-29    |   1100 |
+| 20 | teertha  |                 | 2023-12-29    |   1100 |
+| 21 | teertha  |                 | 2023-12-29    |   1100 |
+| 22 | teertha  |                 | 2023-12-29    |   1100 |
+| 23 | teertha  |                 | 2023-12-29    |   1100 |
+| 24 | teertha  |                 | 2023-12-29    |   1100 |
+| 25 | teertha  | 2,1|1,1|3,1|4,1 | 2023-12-31    |   1985 |
+| 26 | teertha  |                 | 2023-12-31    |   1985 |
+| 27 | teertha  |                 | 2023-12-31    |   1985 |
+| 28 | teertha  |                 | 2023-12-31    |   1985 |
+| 29 | teertha  |                 | 2023-12-31    |   1985 |
+| 30 | teertha  | 3,1|1,1         | 2023-12-31    |   1135 |
++----+----------+-----------------+---------------+--------+
+30 rows in set (0.77 sec)
+
+mysql> select * from wishlist_view;
