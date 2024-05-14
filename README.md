@@ -1,2 +1,2 @@
 # bag-store
-flask ecommmerce website
+flask e-commerce website
